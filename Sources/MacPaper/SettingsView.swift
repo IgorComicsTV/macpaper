@@ -78,15 +78,15 @@ struct SettingsView: View {
                 .font(.title2)
                 .foregroundStyle(.tint)
             Text("MacPaper").font(.title2.bold())
-            TextField("Buscar wallpapers", text: $search)
+            TextField(L10n.text("library.search"), text: $search)
                 .textFieldStyle(.roundedBorder)
                 .frame(maxWidth: 330)
             Spacer()
             Label(
-                manager.powerMonitor.isOnBattery ? "Modo econômico" : "Na tomada",
+                manager.powerMonitor.isOnBattery ? L10n.text("power.saving") : L10n.text("power.plugged"),
                 systemImage: manager.powerMonitor.isOnBattery ? "battery.50percent" : "bolt.fill"
             ).foregroundStyle(.secondary)
-            Button("Adicionar pasta…", systemImage: "plus", action: chooseFolder)
+            Button(L10n.text("library.add_folder"), systemImage: "plus", action: chooseFolder)
                 .buttonStyle(.borderedProminent)
         }
         .padding(.horizontal, 18)
@@ -95,7 +95,7 @@ struct SettingsView: View {
 
     private var targetBar: some View {
         HStack(spacing: 16) {
-            Text("Aplicar em").font(.headline)
+            Text(L10n.text("target.apply_to")).font(.headline)
             ForEach(manager.displays) { display in
                 Toggle(isOn: Binding(
                     get: { selectedDisplays.contains(display.id) },
@@ -109,11 +109,11 @@ struct SettingsView: View {
                 .toggleStyle(.button)
             }
             Divider().frame(height: 24)
-            Picker("Layout", selection: $layout) {
-                ForEach(WallpaperLayoutMode.allCases, id: \.self) { Text($0.title).tag($0) }
+            Picker(L10n.text("target.layout"), selection: $layout) {
+                ForEach(WallpaperLayoutMode.allCases, id: \.self) { Text(L10n.title(for: $0)).tag($0) }
             }.labelsHidden().frame(width: 140)
-            Picker("Enquadramento", selection: $contentMode) {
-                ForEach(VideoContentMode.allCases, id: \.self) { Text($0.title).tag($0) }
+            Picker(L10n.text("target.framing"), selection: $contentMode) {
+                ForEach(VideoContentMode.allCases, id: \.self) { Text(L10n.title(for: $0)).tag($0) }
             }.labelsHidden().frame(width: 130)
         }
         .padding(.horizontal, 18)
@@ -122,45 +122,45 @@ struct SettingsView: View {
 
     private var emptyLibrary: some View {
         ContentUnavailableView {
-            Label("Sua biblioteca está vazia", systemImage: "film.stack")
+            Label(L10n.text("library.empty_title"), systemImage: "film.stack")
         } description: {
-            Text("Adicione uma pasta com vídeos MP4, MOV ou M4V.")
+            Text(L10n.text("library.empty_description"))
         } actions: {
-            Button("Adicionar pasta…", action: chooseFolder)
+            Button(L10n.text("library.add_folder"), action: chooseFolder)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var groupControls: some View {
         HStack(spacing: 14) {
-            Picker("Ordem", selection: Binding(
+            Picker(L10n.text("controls.order"), selection: Binding(
                 get: { selectedGroup?.order ?? .random },
                 set: { value in updateSelectedGroups { $0.order = value } }
             )) {
-                ForEach(PlaylistOrder.allCases, id: \.self) { Text($0.title).tag($0) }
+                ForEach(PlaylistOrder.allCases, id: \.self) { Text(L10n.title(for: $0)).tag($0) }
             }.frame(width: 170)
-            Picker("Troca", selection: Binding(
+            Picker(L10n.text("controls.change"), selection: Binding(
                 get: { selectedGroup?.interval ?? 3_600 },
                 set: { value in updateSelectedGroups { $0.interval = value } }
             )) {
-                ForEach(TimerPreset.values, id: \.self) { Text(TimerPreset.label(for: $0)).tag($0) }
+                ForEach(TimerPreset.values, id: \.self) { Text(L10n.timer($0)).tag($0) }
             }.frame(width: 160)
-            Picker("Apps em primeiro plano", selection: Binding(
+            Picker(L10n.text("controls.foreground_apps"), selection: Binding(
                 get: { store.configuration.foregroundBehavior },
                 set: { store.setForegroundBehavior($0) }
             )) {
-                ForEach(ForegroundBehavior.allCases, id: \.self) { Text($0.title).tag($0) }
+                ForEach(ForegroundBehavior.allCases, id: \.self) { Text(L10n.title(for: $0)).tag($0) }
             }.frame(width: 320)
             Spacer()
             if !manager.foregroundPausedDisplays.isEmpty {
                 let names = manager.displays.filter { manager.foregroundPausedDisplays.contains($0.id) }.map(\.name)
-                Label("Pausado: \(names.joined(separator: ", "))", systemImage: "pause.circle.fill")
+                Label(L10n.text("controls.paused_displays", names.joined(separator: ", ")), systemImage: "pause.circle.fill")
                     .foregroundStyle(.orange)
             }
-            Button(store.configuration.globallyPaused ? "Retomar tudo" : "Pausar tudo") {
+            Button(store.configuration.globallyPaused ? L10n.text("controls.resume_all") : L10n.text("controls.pause_all")) {
                 manager.toggleGlobalPause()
             }
-            Button("Próximo") { manager.nextAll() }
+            Button(L10n.text("controls.next")) { manager.nextAll() }
         }
         .padding(.horizontal, 18)
         .frame(height: 58)
@@ -184,7 +184,7 @@ struct SettingsView: View {
 
     private func chooseFolder() {
         let panel = NSOpenPanel()
-        panel.title = "Adicionar pasta à biblioteca"
+        panel.title = L10n.text("library.folder_panel_title")
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
@@ -230,7 +230,7 @@ private struct WallpaperCard: View {
         }
         .buttonStyle(.plain)
         .task(id: url) { thumbnail = await ThumbnailGenerator.shared.image(for: url) }
-        .help("Aplicar \(url.lastPathComponent)")
+        .help(L10n.text("library.apply_help", url.lastPathComponent))
     }
 }
 
@@ -239,7 +239,7 @@ final class SettingsWindowController: NSWindowController {
     init(manager: WallpaperManager, store: SettingsStore) {
         let root = SettingsView(manager: manager, store: store)
         let window = NSWindow(contentViewController: NSHostingController(rootView: root))
-        window.title = "MacPaper — Biblioteca"
+        window.title = L10n.text("window.library_title")
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.setContentSize(NSSize(width: 1_020, height: 700))
         window.center()

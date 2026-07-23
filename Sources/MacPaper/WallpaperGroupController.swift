@@ -41,7 +41,7 @@ private final class MetalWallpaperView: NSView {
 
 @MainActor
 private final class WallpaperSurface {
-    let display: DisplayDescriptor
+    private(set) var display: DisplayDescriptor
     let window: NSWindow
     let view: MetalWallpaperView
 
@@ -68,9 +68,29 @@ private final class WallpaperSurface {
 
     func show() { window.orderFrontRegardless() }
     func hide() { window.orderOut(nil) }
-    func close() {
-        window.orderOut(nil)
-        window.close()
+    func update(display: DisplayDescriptor) {
+        self.display = display
+        window.setFrame(display.screen.frame, display: true)
+    }
+}
+
+@MainActor
+private final class WallpaperSurfaceVault {
+    static let shared = WallpaperSurfaceVault()
+    private var surfaces: [String: [WallpaperSurface]] = [:]
+
+    func store(_ surface: WallpaperSurface) {
+        surface.hide()
+        var stored = surfaces[surface.display.id] ?? []
+        if !stored.contains(where: { $0 === surface }) { stored.append(surface) }
+        surfaces[surface.display.id] = stored
+    }
+
+    func take(for display: DisplayDescriptor) -> WallpaperSurface? {
+        guard var stored = surfaces[display.id], let surface = stored.popLast() else { return nil }
+        surfaces[display.id] = stored
+        surface.update(display: display)
+        return surface
     }
 }
 
@@ -91,6 +111,9 @@ final class WallpaperGroupController {
     private var renderTimer: Timer?
     private var directoryMonitor: DirectoryMonitor?
     private var observers: [NSObjectProtocol] = []
+    private var playTask: Task<Void, Never>?
+    private var playGeneration = 0
+    private var isClosed = false
     private var globallyPaused = false
     private var systemSuspended = false
     private var onBattery = false
@@ -126,6 +149,7 @@ final class WallpaperGroupController {
         globallyPaused: Bool,
         onBattery: Bool
     ) {
+        guard !isClosed else { return }
         let folderChanged = self.configuration.folderPath != configuration.folderPath
         let fileChanged = self.configuration.currentFile != configuration.currentFile
         let intervalChanged = self.configuration.interval != configuration.interval
@@ -154,6 +178,7 @@ final class WallpaperGroupController {
     }
 
     func next() {
+        guard !isClosed else { return }
         guard let next = MediaCatalog.next(in: files, after: currentURL, order: configuration.order) else {
             stopForEmptyPlaylist()
             return
@@ -162,23 +187,35 @@ final class WallpaperGroupController {
     }
 
     func close() {
+        guard !isClosed else { return }
+        isClosed = true
+        playGeneration += 1
+        playTask?.cancel()
+        playTask = nil
         renderTimer?.invalidate()
+        renderTimer = nil
         switchTimer?.invalidate()
+        switchTimer = nil
+        directoryMonitor = nil
+        observers.forEach(NotificationCenter.default.removeObserver)
+        observers.removeAll()
         player.pause()
         player.replaceCurrentItem(with: nil)
         videoOutput = nil
-        directoryMonitor = nil
-        surfaces.values.forEach { $0.close() }
+        surfaces.values.forEach { WallpaperSurfaceVault.shared.store($0) }
+        surfaces.removeAll(keepingCapacity: false)
     }
 
     private func updateSurfaces() {
         let activeIDs = Set(displays.map(\.id))
-        for (displayID, surface) in surfaces where !activeIDs.contains(displayID) {
-            surface.close()
-            surfaces[displayID] = nil
+        let removedIDs = surfaces.keys.filter { !activeIDs.contains($0) }
+        for displayID in removedIDs {
+            guard let surface = surfaces.removeValue(forKey: displayID) else { continue }
+            WallpaperSurfaceVault.shared.store(surface)
         }
         for display in displays where surfaces[display.id] == nil {
-            surfaces[display.id] = WallpaperSurface(display: display, device: device)
+            surfaces[display.id] = WallpaperSurfaceVault.shared.take(for: display)
+                ?? WallpaperSurface(display: display, device: device)
         }
         if currentURL != nil { surfaces.values.forEach { $0.show() } }
     }
@@ -210,17 +247,23 @@ final class WallpaperGroupController {
     }
 
     private func play(_ source: URL, preservingTime: Bool = false) {
+        guard !isClosed else { return }
+        playGeneration += 1
+        let generation = playGeneration
+        playTask?.cancel()
         let oldTime = preservingTime ? player.currentTime() : .zero
+        let batteryMode = onBattery
         currentURL = source
         configuration.currentFile = source.path
         onCurrentFileChanged?(source.path)
         surfaces.values.forEach { $0.show() }
 
-        Task { [weak self] in
-            guard let self else { return }
+        playTask = Task { [weak self] in
             let optimized = await MediaOptimizer.shared.cachedURL(for: source)
+            guard !Task.isCancelled else { return }
             await MainActor.run {
-                let playbackURL = self.onBattery ? (optimized ?? source) : source
+                guard let self, !self.isClosed, self.playGeneration == generation else { return }
+                let playbackURL = batteryMode ? (optimized ?? source) : source
                 let item = AVPlayerItem(url: playbackURL)
                 item.preferredForwardBufferDuration = 2
                 let output = AVPlayerItemVideoOutput(pixelBufferAttributes: [
@@ -234,12 +277,13 @@ final class WallpaperGroupController {
                 self.applyPlaybackState()
                 self.scheduleSwitchTimer()
             }
-            await MediaOptimizer.shared.optimizeIfNeeded(source, onBattery: self.onBattery)
+            guard !Task.isCancelled else { return }
+            await MediaOptimizer.shared.optimizeIfNeeded(source, onBattery: batteryMode)
         }
     }
 
     private func renderFrame() {
-        guard player.rate != 0, let output = videoOutput, currentURL != nil else { return }
+        guard !isClosed, player.rate != 0, let output = videoOutput, currentURL != nil else { return }
         let itemTime = output.itemTime(forHostTime: CACurrentMediaTime())
         guard output.hasNewPixelBuffer(forItemTime: itemTime),
               let pixelBuffer = output.copyPixelBuffer(forItemTime: itemTime, itemTimeForDisplay: nil)
@@ -354,6 +398,7 @@ final class WallpaperGroupController {
     }
 
     private func applyPlaybackState() {
+        guard !isClosed else { return }
         let allDisplaysPaused = !configuration.displayIDs.isEmpty
             && Set(configuration.displayIDs).isSubset(of: foregroundPausedDisplays)
         if globallyPaused || configuration.isPaused || systemSuspended || allDisplaysPaused || currentURL == nil {

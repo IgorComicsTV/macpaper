@@ -75,6 +75,9 @@ fi
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources"
 cp "$BUILD_DIR/MacPaper" "$CONTENTS/MacOS/MacPaper"
 cp "$ROOT_DIR/Resources/Info.plist" "$CONTENTS/Info.plist"
+cp -R "$ROOT_DIR/Resources/en.lproj" "$CONTENTS/Resources/"
+cp -R "$ROOT_DIR/Resources/pt-BR.lproj" "$CONTENTS/Resources/"
+cp -R "$ROOT_DIR/Resources/pt.lproj" "$CONTENTS/Resources/"
 
 rm -rf "$ICONSET"
 mkdir -p "$ICONSET"
@@ -89,6 +92,7 @@ iconutil -c icns "$ICONSET" -o "$CONTENTS/Resources/AppIcon.icns"
 signature_ok=false
 for attempt in 1 2 3; do
   xattr -cr "$STAGING_APP"
+  xattr -d com.apple.FinderInfo "$STAGING_APP" 2>/dev/null || true
   if codesign --force --deep --sign - "$STAGING_APP" && codesign --verify --deep --strict "$STAGING_APP"; then
     signature_ok=true
     break
@@ -103,6 +107,8 @@ plutil -lint "$CONTENTS/Info.plist"
 if [[ "$APP_PATH" == "$ROOT_DIR/outputs/MacPaper.app" ]]; then
   rm -rf "$APP_PATH"
 fi
-ditto "$STAGING_APP" "$APP_PATH"
-codesign --verify --deep "$APP_PATH"
+ditto --noextattr "$STAGING_APP" "$APP_PATH"
+xattr -cr "$APP_PATH"
+xattr -d com.apple.FinderInfo "$APP_PATH" 2>/dev/null || true
+codesign --verify --deep --strict "$APP_PATH"
 echo "$APP_PATH"

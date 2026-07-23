@@ -1,0 +1,54 @@
+"library.search" = "Search wallpapers";
+"library.add_folder" = "Add Folder…";
+"library.empty_title" = "Your library is empty";
+"library.empty_description" = "Add a folder containing MP4, MOV, or M4V videos.";
+"library.folder_panel_title" = "Add Folder to Library";
+"library.apply_help" = "Apply %@";
+"window.library_title" = "MacPaper — Library";
+
+"power.saving" = "Power saving";
+"power.plugged" = "Plugged in";
+"target.apply_to" = "Apply to";
+"target.layout" = "Layout";
+"target.framing" = "Framing";
+
+"layout.individual" = "Individual";
+"layout.mirrored" = "Mirrored";
+"layout.spanned" = "Spanned";
+"content.fill" = "Fill";
+"content.fit" = "Fit";
+"content.stretch" = "Stretch";
+"playlist.sequential" = "Sequential";
+"playlist.random" = "Random";
+"foreground.continuePlaying" = "Keep playing";
+"foreground.pauseOccupiedDisplays" = "Pause on occupied display";
+
+"controls.order" = "Order";
+"controls.change" = "Change";
+"controls.foreground_apps" = "Foreground apps";
+"controls.paused_displays" = "Paused: %@";
+"controls.resume_all" = "Resume All";
+"controls.pause_all" = "Pause All";
+"controls.next" = "Next";
+
+"timer.15_minutes" = "15 min";
+"timer.30_minutes" = "30 min";
+"timer.1_hour" = "1 hour";
+"timer.2_hours" = "2 hours";
+"timer.6_hours" = "6 hours";
+"timer.12_hours" = "12 hours";
+"timer.24_hours" = "24 hours";
+"timer.minutes" = "%d min";
+"timer.hours" = "%.1f hours";
+
+"menu.battery" = "Battery · power saving";
+"menu.power" = "Connected to power";
+"menu.open_library" = "Open Library…";
+"menu.next" = "Next Wallpaper";
+"menu.resume" = "Resume Wallpapers";
+"menu.pause" = "Pause Wallpapers";
+"menu.launch_at_login" = "Launch at Login";
+"menu.clear_cache" = "Clear Optimized Cache";
+"menu.quit" = "Quit MacPaper";
+"error.launch_at_login" = "Could not change the launch at login setting.";
+"error.clear_cache" = "Could not clear the cache.";

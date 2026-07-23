@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/IgorComicsTV/macpaper/releases/latest/download/MacPaper-2.0.3-macOS-arm64.zip"><strong>⬇ Download MacPaper for macOS</strong></a>
+  <a href="https://github.com/IgorComicsTV/macpaper/releases/latest/download/MacPaper-2.1.0-macOS-arm64.zip"><strong>⬇ Download MacPaper for macOS</strong></a>
   ·
   <a href="#build-from-source">Build from source</a>
   ·
@@ -41,6 +41,7 @@ MacPaper turns your videos into beautiful animated desktops without the weight o
 - **Playlists and timers** — sequential or random rotation from 15 minutes to 24 hours.
 - **Battery-aware playback** — automatic HEVC 1080p/30 fps optimized copies for demanding videos.
 - **Menu bar native** — pause, skip, launch at login, clear cache, and quit.
+- **English and Portuguese** — follows the language selected in macOS.
 - **Private by design** — no account, analytics, uploads, server, or network connection.
 
 ## Multi-display modes
@@ -55,7 +56,7 @@ When a display is paused because an app is in front, the shared timeline continu
 
 ## Install
 
-1. Download [`MacPaper-2.0.3-macOS-arm64.zip`](https://github.com/IgorComicsTV/macpaper/releases/latest/download/MacPaper-2.0.3-macOS-arm64.zip).
+1. Download [`MacPaper-2.1.0-macOS-arm64.zip`](https://github.com/IgorComicsTV/macpaper/releases/latest/download/MacPaper-2.1.0-macOS-arm64.zip).
 2. Extract it and move **MacPaper.app** to `/Applications`.
 3. On the first launch, Control-click the app and choose **Open**.
 4. Add a folder containing `.mp4`, `.mov`, or `.m4v` files.
@@ -117,7 +118,7 @@ When reporting a bug, include your macOS version, Mac model, number of displays,
 
 ## Português
 
-O MacPaper é uma alternativa nativa e gratuita ao Wallpaper Engine/Lively Wallpaper para macOS. Ele reproduz vídeos como wallpaper, sincroniza múltiplos monitores, oferece playlists e pausa somente a tela ocupada por um aplicativo em primeiro plano.
+O MacPaper é uma alternativa nativa e gratuita ao Wallpaper Engine/Lively Wallpaper para macOS. Ele reproduz vídeos como wallpaper, sincroniza múltiplos monitores, oferece playlists, pausa somente a tela ocupada por um aplicativo em primeiro plano e acompanha automaticamente o idioma do macOS em português ou inglês.
 
 Baixe a versão mais recente em [Releases](https://github.com/IgorComicsTV/macpaper/releases/latest). Se gostar do projeto, deixe uma ⭐ para ajudar outras pessoas a encontrá-lo.
 

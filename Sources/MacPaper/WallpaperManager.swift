@@ -40,9 +40,10 @@ final class WallpaperManager: ObservableObject {
 
     func rebuildGroups() {
         let configuredIDs = Set(store.configuration.groups.map(\.id))
-        for (id, controller) in controllers where !configuredIDs.contains(id) {
+        let removedIDs = controllers.keys.filter { !configuredIDs.contains($0) }
+        for id in removedIDs {
+            guard let controller = controllers.removeValue(forKey: id) else { continue }
             retire(controller)
-            controllers[id] = nil
         }
 
         for group in store.configuration.groups {
