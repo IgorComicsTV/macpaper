@@ -6,7 +6,7 @@
 
 <p align="center">
   A lightweight, native animated wallpaper engine for macOS.<br>
-  The open alternative to Wallpaper Engine and Lively Wallpaper — built in Swift, with battery life in mind.
+  A native alternative to Wallpaper Engine and Lively Wallpaper — built in Swift, with battery life in mind.
 </p>
 
 <p align="center">
