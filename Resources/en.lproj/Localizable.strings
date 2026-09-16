@@ -31,6 +31,7 @@
 "controls.pause_all" = "Pause All";
 "controls.next" = "Next";
 
+"timer.never" = "Never";
 "timer.15_minutes" = "15 min";
 "timer.30_minutes" = "30 min";
 "timer.1_hour" = "1 hour";

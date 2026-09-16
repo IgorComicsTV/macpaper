@@ -26,6 +26,7 @@ enum L10n {
 
     static func timer(_ seconds: TimeInterval) -> String {
         switch Int(seconds) {
+        case 0: return text("timer.never")
         case 900: return text("timer.15_minutes")
         case 1_800: return text("timer.30_minutes")
         case 3_600: return text("timer.1_hour")

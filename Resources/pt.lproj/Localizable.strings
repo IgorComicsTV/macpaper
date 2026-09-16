@@ -27,6 +27,7 @@
 "controls.resume_all" = "Retomar tudo";
 "controls.pause_all" = "Pausar tudo";
 "controls.next" = "Próximo";
+"timer.never" = "Nunca";
 "timer.15_minutes" = "15 min";
 "timer.30_minutes" = "30 min";
 "timer.1_hour" = "1 hora";

@@ -13,6 +13,7 @@ final class MediaCatalogTests: XCTestCase {
     }
 
     func testTimerBounds() {
+        XCTAssertEqual(TimerPreset.clamped(TimerPreset.never), TimerPreset.never)
         XCTAssertEqual(TimerPreset.clamped(1), 60)
         XCTAssertEqual(TimerPreset.clamped(9_999_999), 604_800)
     }

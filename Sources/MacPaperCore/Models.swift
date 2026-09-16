@@ -152,16 +152,19 @@ public struct MacPaperConfiguration: Codable, Equatable, Sendable {
 }
 
 public enum TimerPreset {
-    public static let values: [TimeInterval] = [900, 1_800, 3_600, 7_200, 21_600, 43_200, 86_400]
+    public static let never: TimeInterval = 0
+    public static let values: [TimeInterval] = [never, 900, 1_800, 3_600, 7_200, 21_600, 43_200, 86_400]
     public static let minimum: TimeInterval = 60
     public static let maximum: TimeInterval = 604_800
 
     public static func clamped(_ value: TimeInterval) -> TimeInterval {
+        if value == never { return never }
         min(max(value, minimum), maximum)
     }
 
     public static func label(for seconds: TimeInterval) -> String {
         switch Int(seconds) {
+        case 0: return "Nunca"
         case 900: return "15 min"
         case 1_800: return "30 min"
         case 3_600: return "1 hora"

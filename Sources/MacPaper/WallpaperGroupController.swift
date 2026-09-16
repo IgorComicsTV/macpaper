@@ -389,7 +389,9 @@ final class WallpaperGroupController {
     private func scheduleSwitchTimer() {
         switchTimer?.invalidate()
         guard !files.isEmpty else { return }
-        switchTimer = Timer.scheduledTimer(withTimeInterval: TimerPreset.clamped(configuration.interval), repeats: true) {
+        let interval = TimerPreset.clamped(configuration.interval)
+        guard interval > 0 else { return }
+        switchTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) {
             [weak self] _ in Task { @MainActor in
                 guard let self, !self.globallyPaused, !self.configuration.isPaused, !self.systemSuspended else { return }
                 self.next()

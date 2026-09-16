@@ -13,6 +13,8 @@ SYSTEM_SDK="$(xcrun --show-sdk-path)"
 SYSTEM_SDK_REAL="$(cd "$SYSTEM_SDK" && pwd -P)"
 SDK_PATH="$ROOT_DIR/work/patched-sdk/MacOSX.sdk"
 LOCAL_TOOLCHAIN="$ROOT_DIR/work/toolchain"
+SDK_PATCH_MARKER="$ROOT_DIR/work/patched-sdk/.swiftinterface-patched"
+SWIFT_OPTIMIZATION="${SWIFT_OPTIMIZATION:--O}"
 
 mkdir -p "$BUILD_DIR" "$MODULE_DIR"
 running_pids="$(pgrep -f "^$ROOT_DIR/(outputs|work/build)/MacPaper.app/Contents/MacOS/MacPaper$" || true)"
@@ -31,10 +33,14 @@ SWIFT_ENV=("${BASE_SWIFT_ENV[@]}")
 # compilador e SDK incompatíveis. A correção é local e nunca altera o sistema.
 if ! swiftc "${BASE_SWIFT_ENV[@]}" -typecheck "$ROOT_DIR/Sources/MacPaperCore/Models.swift" >/dev/null 2>&1; then
   if [[ ! -d "$SDK_PATH" ]]; then
+    mkdir -p "${SDK_PATH:h}"
     cp -cR "$SYSTEM_SDK_REAL" "$SDK_PATH"
   fi
-  find "$SDK_PATH" -name '*.swiftinterface' -print0 | xargs -0 perl -pi -e \
-    's/swiftlang-6\.2\.0\.9\.904 clang-1700\.3\.9\.904/swiftlang-6.2.0.9.909 clang-1700.3.9.907/g'
+  if [[ ! -f "$SDK_PATCH_MARKER" ]]; then
+    find "$SDK_PATH" -name '*.swiftinterface' -print0 | xargs -0 perl -pi -e \
+      's/swiftlang-6\.2\.0\.9\.904 clang-1700\.3\.9\.904/swiftlang-6.2.0.9.909 clang-1700.3.9.907/g'
+    touch "$SDK_PATCH_MARKER"
+  fi
   if [[ ! -d "$LOCAL_TOOLCHAIN/usr/lib/swift" ]]; then
     mkdir -p "$LOCAL_TOOLCHAIN/usr/lib" "$LOCAL_TOOLCHAIN/usr/include/swift"
     cp -cR /Library/Developer/CommandLineTools/usr/lib/swift "$LOCAL_TOOLCHAIN/usr/lib/swift"
@@ -53,19 +59,19 @@ fi
 CORE_SOURCES=("$ROOT_DIR"/Sources/MacPaperCore/*.swift)
 APP_SOURCES=("$ROOT_DIR"/Sources/MacPaper/*.swift)
 
-swiftc "${SWIFT_ENV[@]}" -O -parse-as-library -emit-library -static -emit-module \
+swiftc "${SWIFT_ENV[@]}" "$SWIFT_OPTIMIZATION" -parse-as-library -emit-library -static -emit-module \
   -module-name MacPaperCore \
   -emit-module-path "$MODULE_DIR/MacPaperCore.swiftmodule" \
   "${CORE_SOURCES[@]}" \
   -o "$BUILD_DIR/libMacPaperCore.a"
 
-swiftc "${SWIFT_ENV[@]}" -O -I "$MODULE_DIR" -L "$BUILD_DIR" -lMacPaperCore \
+swiftc "${SWIFT_ENV[@]}" "$SWIFT_OPTIMIZATION" -I "$MODULE_DIR" -L "$BUILD_DIR" -lMacPaperCore \
   -framework AppKit -framework AVFoundation -framework ServiceManagement -framework IOKit -framework CryptoKit \
   -framework Metal -framework CoreImage -framework QuartzCore \
   "${APP_SOURCES[@]}" \
   -o "$BUILD_DIR/MacPaper"
 
-swiftc "${SWIFT_ENV[@]}" -O -I "$MODULE_DIR" -L "$BUILD_DIR" -lMacPaperCore \
+swiftc "${SWIFT_ENV[@]}" "$SWIFT_OPTIMIZATION" -I "$MODULE_DIR" -L "$BUILD_DIR" -lMacPaperCore \
   "$ROOT_DIR/scripts/verify.swift" -o "$BUILD_DIR/verify"
 "$BUILD_DIR/verify"
 
