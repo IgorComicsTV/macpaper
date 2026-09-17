@@ -1,6 +1,9 @@
 name: Release
 
 on:
+  push:
+    tags:
+      - v*
   workflow_dispatch:
     inputs:
       version:
@@ -24,26 +27,34 @@ jobs:
 
       - name: Package app
         run: |
+          version="${{ inputs.version }}"
+          if [ -z "$version" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          fi
           mkdir -p work/release
-          ditto -c -k --sequesterRsrc --keepParent outputs/MacPaper.app "work/release/MacPaper-${{ inputs.version }}-macOS-arm64.zip"
-          shasum -a 256 "work/release/MacPaper-${{ inputs.version }}-macOS-arm64.zip" > "work/release/MacPaper-${{ inputs.version }}-macOS-arm64.zip.sha256"
+          ditto -c -k --sequesterRsrc --keepParent outputs/MacPaper.app "work/release/MacPaper-${version}-macOS-arm64.zip"
+          shasum -a 256 "work/release/MacPaper-${version}-macOS-arm64.zip" > "work/release/MacPaper-${version}-macOS-arm64.zip.sha256"
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="v${{ inputs.version }}"
-          notes="MacPaper ${{ inputs.version }}
+          version="${{ inputs.version }}"
+          if [ -z "$version" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          tag="v${version}"
+          notes="MacPaper ${version}
 
 - Adds the Never option for wallpaper switching.
 - Keeps the current wallpaper fixed until you change it manually.
 
 SHA-256:
-$(cat "work/release/MacPaper-${{ inputs.version }}-macOS-arm64.zip.sha256")"
+$(cat "work/release/MacPaper-${version}-macOS-arm64.zip.sha256")"
 
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "work/release/MacPaper-${{ inputs.version }}-macOS-arm64.zip" --clobber
-            gh release edit "$tag" --title "MacPaper ${{ inputs.version }}" --notes "$notes" --latest
+            gh release upload "$tag" "work/release/MacPaper-${version}-macOS-arm64.zip" --clobber
+            gh release edit "$tag" --title "MacPaper ${version}" --notes "$notes" --latest
           else
-            gh release create "$tag" "work/release/MacPaper-${{ inputs.version }}-macOS-arm64.zip" --title "MacPaper ${{ inputs.version }}" --notes "$notes" --latest
+            gh release create "$tag" "work/release/MacPaper-${version}-macOS-arm64.zip" --title "MacPaper ${version}" --notes "$notes" --latest
           fi
