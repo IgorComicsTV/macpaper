@@ -1,47 +1,45 @@
 name: Release
 
-"on":
-  push:
+on: workflow_dispatch
 
 permissions:
   contents: write
 
 jobs:
   build-release:
-    name: Build and publish MacPaper
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Build app
         run: ./scripts/build.sh
 
       - name: Package app
         run: |
-          version="${GITHUB_REF_NAME#v}"
           mkdir -p work/release
-          ditto -c -k --sequesterRsrc --keepParent outputs/MacPaper.app "work/release/MacPaper-${version}-macOS-arm64.zip"
-          shasum -a 256 "work/release/MacPaper-${version}-macOS-arm64.zip" > "work/release/MacPaper-${version}-macOS-arm64.zip.sha256"
+          ditto -c -k --sequesterRsrc --keepParent outputs/MacPaper.app work/release/MacPaper-2.1.1-macOS-arm64.zip
+          shasum -a 256 work/release/MacPaper-2.1.1-macOS-arm64.zip > work/release/MacPaper-2.1.1-macOS-arm64.zip.sha256
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          tag="v${version}"
-          notes="MacPaper ${version}
+          notes="$(cat <<'NOTES'
+MacPaper 2.1.1
 
 - Adds the Never option for wallpaper switching.
 - Keeps the current wallpaper fixed until you change it manually.
+NOTES
+)"
+          checksum="$(cat work/release/MacPaper-2.1.1-macOS-arm64.zip.sha256)"
+          notes="${notes}
 
 SHA-256:
-$(cat "work/release/MacPaper-${version}-macOS-arm64.zip.sha256")"
+${checksum}"
 
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "work/release/MacPaper-${version}-macOS-arm64.zip" --clobber
-            gh release edit "$tag" --title "MacPaper ${version}" --notes "$notes" --latest
+          if gh release view v2.1.1 >/dev/null 2>&1; then
+            gh release upload v2.1.1 work/release/MacPaper-2.1.1-macOS-arm64.zip --clobber
+            gh release edit v2.1.1 --title "MacPaper 2.1.1" --notes "$notes" --latest
           else
-            gh release create "$tag" "work/release/MacPaper-${version}-macOS-arm64.zip" --title "MacPaper ${version}" --notes "$notes" --latest
+            gh release create v2.1.1 work/release/MacPaper-2.1.1-macOS-arm64.zip --title "MacPaper 2.1.1" --notes "$notes" --latest
           fi
