@@ -159,7 +159,7 @@ public enum TimerPreset {
 
     public static func clamped(_ value: TimeInterval) -> TimeInterval {
         if value == never { return never }
-        min(max(value, minimum), maximum)
+        return min(max(value, minimum), maximum)
     }
 
     public static func label(for seconds: TimeInterval) -> String {
