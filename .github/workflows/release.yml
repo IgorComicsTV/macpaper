@@ -25,22 +25,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          notes="$(cat <<'NOTES'
-MacPaper 2.1.1
-
-- Adds the Never option for wallpaper switching.
-- Keeps the current wallpaper fixed until you change it manually.
-NOTES
-)"
-          checksum="$(cat work/release/MacPaper-2.1.1-macOS-arm64.zip.sha256)"
-          notes="${notes}
-
-SHA-256:
-${checksum}"
+          {
+            echo "MacPaper 2.1.1"
+            echo
+            echo "- Adds the Never option for wallpaper switching."
+            echo "- Keeps the current wallpaper fixed until you change it manually."
+            echo
+            echo "SHA-256:"
+            cat work/release/MacPaper-2.1.1-macOS-arm64.zip.sha256
+          } > work/release/release-notes.md
 
           if gh release view v2.1.1 >/dev/null 2>&1; then
             gh release upload v2.1.1 work/release/MacPaper-2.1.1-macOS-arm64.zip --clobber
-            gh release edit v2.1.1 --title "MacPaper 2.1.1" --notes "$notes" --latest
+            gh release edit v2.1.1 --title "MacPaper 2.1.1" --notes-file work/release/release-notes.md --latest
           else
-            gh release create v2.1.1 work/release/MacPaper-2.1.1-macOS-arm64.zip --title "MacPaper 2.1.1" --notes "$notes" --latest
+            gh release create v2.1.1 work/release/MacPaper-2.1.1-macOS-arm64.zip --title "MacPaper 2.1.1" --notes-file work/release/release-notes.md --latest
           fi
