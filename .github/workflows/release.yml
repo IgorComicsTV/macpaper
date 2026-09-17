@@ -1,15 +1,9 @@
 name: Release
 
-on:
+"on":
   push:
     tags:
       - v*
-  workflow_dispatch:
-    inputs:
-      version:
-        description: Release version, without the leading v
-        required: true
-        default: 2.1.1
 
 permissions:
   contents: write
@@ -27,10 +21,7 @@ jobs:
 
       - name: Package app
         run: |
-          version="${{ inputs.version }}"
-          if [ -z "$version" ]; then
-            version="${GITHUB_REF_NAME#v}"
-          fi
+          version="${GITHUB_REF_NAME#v}"
           mkdir -p work/release
           ditto -c -k --sequesterRsrc --keepParent outputs/MacPaper.app "work/release/MacPaper-${version}-macOS-arm64.zip"
           shasum -a 256 "work/release/MacPaper-${version}-macOS-arm64.zip" > "work/release/MacPaper-${version}-macOS-arm64.zip.sha256"
@@ -39,10 +30,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version="${{ inputs.version }}"
-          if [ -z "$version" ]; then
-            version="${GITHUB_REF_NAME#v}"
-          fi
+          version="${GITHUB_REF_NAME#v}"
           tag="v${version}"
           notes="MacPaper ${version}
 
